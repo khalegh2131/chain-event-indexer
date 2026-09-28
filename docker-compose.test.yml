@@ -1,0 +1,28 @@
+# Disposable PostgreSQL instance for the integration test suite.
+#
+#   docker compose -f docker-compose.test.yml up -d
+#   DATABASE_URL=postgres://indexer:indexer_password@localhost:5433/chain_event_indexer_test npm run test:integration
+#   docker compose -f docker-compose.test.yml down -v
+#
+# Port 5433 is used so the test database never clashes with a local development
+# database on 5432. Storage is a tmpfs mount: tests are fast and every restart
+# starts from a clean slate.
+services:
+  postgres-test:
+    image: postgres:16-alpine
+    container_name: chain-event-indexer-test-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: indexer
+      POSTGRES_PASSWORD: indexer_password
+      POSTGRES_DB: chain_event_indexer_test
+    ports:
+      - '5433:5432'
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U indexer -d chain_event_indexer_test']
+      interval: 3s
+      timeout: 3s
+      retries: 20
+      start_period: 5s

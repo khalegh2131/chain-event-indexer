@@ -1,0 +1,57 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: chain-event-indexer-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: indexer
+      POSTGRES_PASSWORD: indexer_password
+      POSTGRES_DB: chain_event_indexer
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U indexer -d chain_event_indexer']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  app:
+    build: .
+    image: chain-event-indexer:local
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 15s
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      NODE_ENV: production
+      PORT: '3000'
+      HOST: 0.0.0.0
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      DATABASE_URL: postgres://indexer:indexer_password@postgres:5432/chain_event_indexer
+      CONFIG_PATH: /app/config/config.json
+      ETH_RPC_URL: ${ETH_RPC_URL:-https://ethereum-rpc.publicnode.com}
+      POLLER_ENABLED: ${POLLER_ENABLED:-true}
+      API_KEY: ${API_KEY:-}
+    ports:
+      - '3000:3000'
+    volumes:
+      # Config file is mounted read-only. Set CONFIG_FILE to point at your own
+      # file, e.g. CONFIG_FILE=config/config.json docker compose up -d
+      - ./${CONFIG_FILE:-config/config.example.json}:/app/config/config.json:ro
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '-O-', 'http://127.0.0.1:3000/health']
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  pgdata:

@@ -1,0 +1,31 @@
+# Line-ending policy for a cross-platform repository.
+#
+# The CI runner and the Docker image are Linux. If `docker-entrypoint.sh` is
+# checked out with CRLF, its `#!/bin/sh` shebang breaks inside the Alpine
+# container, and `make` refuses a CRLF Makefile. Everything text is therefore
+# normalized to LF in the repository and in every working tree.
+* text=auto eol=lf
+
+# Explicit (belt and braces) for the files where the wrong ending is fatal.
+*.sh text eol=lf
+*.sql text eol=lf
+*.ts text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+Makefile text eol=lf
+Dockerfile text eol=lf
+.dockerignore text eol=lf
+.env.example text eol=lf
+
+# Windows-only scripts would be the exception if they are ever added.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary assets must never be touched.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.bundle binary

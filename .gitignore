@@ -1,0 +1,15 @@
+node_modules
+dist
+coverage
+.env
+config/config.json
+logs
+.DS_Store
+
+# editor / tooling
+.idea
+.vscode
+*.log
+npm-debug.log*
+tsconfig.tsbuildinfo
+.eslintcache
